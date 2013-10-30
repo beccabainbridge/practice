@@ -1,8 +1,10 @@
 class Board:
-    def __init__(self):
-        self.board = [[' ' for col in range(3)] for row in range(3)]
-        self.value = None
-        self.move = None
+    value_cache = {}
+    def __init__(self, board=None):
+        if board is None:
+            self.board = [[' ' for col in range(3)] for row in range(3)]
+        else:
+            self.board = board
 
     def __str__(self):
         board = ''
@@ -10,34 +12,17 @@ class Board:
             board += "|".join(row) + '\n'
         return board
 
-    def get_board(self):
-        return self.board
+    @property
+    def finished(self):
+        return self.won_player() is not None or self.full
 
-    def set_board(self, board):
-        self.board = board
-        self.value = None
-
-    def is_finished(self):
-        return self.check_three_same() is not None or self.is_full()
-
-    def is_full(self):
+    @property
+    def full(self):
         for row in self.board:
             for i in row:
                 if i == ' ':
                     return False
         return True
-
-    def get_value(self):
-        if not self.value:
-            self.set_value()
-        return self.value
-
-    def set_spot(self, row, col):
-        if self.board[row][col] == ' ':
-            self.board[row][col] = self.get_player()
-            return True
-        else:
-            return False
 
     def get_player(self):
         turns = 0
@@ -47,53 +32,40 @@ class Board:
                     turns += 1
         return 'X' if turns%2 == 0 else 'O'
 
-    def set_value(self):
-        winner = self.check_three_same()
-        if winner:
-            if winner == 'X':
-                self.value = 1
-            else:
-                self.value = -1
+    def get_value(self):
+        winner = self.won_player()
+        if winner == 'X': return 1
+        if winner == 'O': return -1
+        if self.full: return 0
+
+        s = str(self)
+        if s in self.value_cache:
+            return self.value_cache[s]
         else:
-            self.value, self.move = self.create_children()
-                
-    
-    def make_move(self):
-        if self.is_finished():
-            print self
-            return
+            value = self.get_best_child().get_value()
+            self.value_cache[s] = value
+            return value
 
-        if not self.move:
-            found = False
-            for r in range(len(self.board)):
-                for c in range(len(self.board)):
-                    if self.set_spot(r, c):
-                        found = True
-                        break
-                if found:
-                    break
-        else:
-            self.set_spot(self.move[0], self.move[1])
-
-        self.move = None
-        self.value = None
-
-        print self
-
-    def create_children(self):
-        player = self.get_player()
-        children_values = []
+    def get_children(self):
+        children = []
         for row in range(len(self.board)):
             for col in range(len(self.board)):
                 if self.board[row][col] == ' ':
-                    child = Board()
-                    child.set_board([r[:] for r in self.board])
-                    child.set_spot(row, col)
-                    children_values.append([child.get_value(), (row, col)])
-        if not children_values:
-            return [0, None]
+                    child = Board([r[:] for r in self.board])
+                    child.board[row][col] = self.get_player()
+                    children.append(child)
+        return children
 
-        return max(children_values) if player == 'X' else min(children_values)
+    def get_best_child(self):
+        children = self.get_children()
+        if not children:
+            return None
+        children_values = []
+        for child in children:
+            children_values.append(child.get_value())
+        player = self.get_player()
+        key = lambda c: c.get_value()
+        return max(children, key=key) if player == 'X' else min(children, key=key)
 
     def three_same(self, ls):
         a, b, c = ls
@@ -105,7 +77,7 @@ class Board:
         else:
             return None
     
-    def check_three_same(self):
+    def won_player(self):
         size = len(self.board)
         size_range = range(size)
 
@@ -119,21 +91,20 @@ class Board:
 
         return successful_player
 
-def play_game():
+def play_game(human_player='X'):
+    board = Board()
 
-
-    while not board.is_finished():
-        if board.get_player() == 'X':
+    while not board.finished:
+        if board.get_player() == human_player:
             row = input("Enter row: ")
             col = input("Enter col: ")
-            board.move = (row, col)
-            board.make_move()
+            board.board[row][col] = human_player
         else:
-            board.get_value()
-            board.make_move()
+            board = board.get_best_child()
 
-    print "Game Over!"
-
+        print board
+            
+    print "Game Over! %s won!" % board.won_player()
 
 if __name__ == '__main__':
     board = Board()
@@ -142,20 +113,27 @@ if __name__ == '__main__':
     O = 'O'
     _ = ' '
 
-    #print board.get_value()
-    board.set_board([[X,_,X],
-                     [O,_,O],
-                     [X,O,_]])
+    print board.get_value()
+    board.board = [[X,_,X],
+                   [O,_,O],
+                   [X,O,_]]
     assert board.get_value() == 1
     
-    board.set_board([[X,_,X],
-                     [O,_,O],
-                     [X,_,_]])
+    board.board = [[X,_,X],
+                   [O,_,O],
+                   [X,_,_]]
     assert board.get_value() == -1
 
-    board.set_board([[X,X,O],
-                     [O,O,O],
-                     [X,O,X]])
+    board.board = [[X,X,O],
+                   [O,O,O],
+                   [X,O,X]]
     assert board.get_value() == -1
-    
-    
+
+    board.board = [[X,O,_],
+                   [_,X,_],
+                   [_,_,_]]
+
+    print "Tests finished"
+
+    play_game()
+    play_game('O')
