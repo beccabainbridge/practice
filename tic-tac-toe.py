@@ -119,18 +119,9 @@ class Board:
 
         return successful_player
 
-if __name__ == '__main__':
-    board = Board()
+def play_game():
 
-    #print board.get_value()
-    #board.set_board([['X',' ','X'],['O',' ','O'],['X', 'O', ' ']])
-    #print board.get_value()
-    #board.set_board([['X',' ','X'],['O',' ','O'],['X', ' ', ' ']])
-    #print board.get_value()
 
-    #board.set_board([['X',' ','X'],['O','O','O'],['X', 'O', 'O']])
-    #print board.get_value()
-    
     while not board.is_finished():
         if board.get_player() == 'X':
             row = input("Enter row: ")
@@ -142,3 +133,29 @@ if __name__ == '__main__':
             board.make_move()
 
     print "Game Over!"
+
+
+if __name__ == '__main__':
+    board = Board()
+
+    X = 'X'
+    O = 'O'
+    _ = ' '
+
+    #print board.get_value()
+    board.set_board([[X,_,X],
+                     [O,_,O],
+                     [X,O,_]])
+    assert board.get_value() == 1
+    
+    board.set_board([[X,_,X],
+                     [O,_,O],
+                     [X,_,_]])
+    assert board.get_value() == -1
+
+    board.set_board([[X,X,O],
+                     [O,O,O],
+                     [X,O,X]])
+    assert board.get_value() == -1
+    
+    
