@@ -25,6 +25,7 @@ class Board:
         return True
 
     def get_player(self):
+        """ gets current player by checking number of turns on self.board """
         turns = 0
         for r in self.board:
             for i in r:
@@ -33,6 +34,7 @@ class Board:
         return 'X' if turns%2 == 0 else 'O'
 
     def get_value(self):
+        """ gets value of board: 1 is win for X, -1 is win for O, and 0 is tie """
         winner = self.won_player()
         if winner == 'X': return 1
         if winner == 'O': return -1
@@ -47,6 +49,7 @@ class Board:
             return value
 
     def get_children(self):
+        """ returns all possiblilties for next board """
         children = []
         for row in range(len(self.board)):
             for col in range(len(self.board)):
@@ -57,6 +60,7 @@ class Board:
         return children
 
     def get_best_child(self):
+        """ returns child with highest value for current player """
         children = self.get_children()
         if not children:
             return None
@@ -68,16 +72,16 @@ class Board:
         return max(children, key=key) if player == 'X' else min(children, key=key)
 
     def three_same(self, ls):
+        """ returns value if all three list items are the same and a valid player or None if they are different """
         a, b, c = ls
         if a == b and b == c:
-            if a == ' ':
-                return None
-            else:
+            if a == 'X' or a == 'O':
                 return a
         else:
             return None
     
     def won_player(self):
+        """ returns the player who has won. If no one has won, returns None """
         size = len(self.board)
         size_range = range(size)
 
